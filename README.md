@@ -6,7 +6,7 @@
 
 ```bash
 # Define the Name of the MCP Server we are creating.
-MCP_SERVER_NAME="scrum-team-mcp-server"
+MCP_SERVER_NAME="reverse-mcp-server"
 
 # Define the Spec for the initial tool we are making.
 DETAILS=$(cat <<EOF
@@ -16,7 +16,6 @@ DETAILS=$(cat <<EOF
         <tool>
             <name>reverse_tool</name>
             <description>String Reverse</description>
-            <details>The received string should always be exactly reversed.</details>
         </tool>
     </toolsToExpose>
 </toolSpec>

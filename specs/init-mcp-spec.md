@@ -1,6 +1,11 @@
-# Specification for a Template MCP Server
+# Specification for a MCP Server
 
 > A minimal MCP server implementation to serve as a learning example and sanity check.
+
+This template supports arguments being passed into it via $ARGS.
+$ARGS can be things like the name of the server or information about the initial MCP Server tool call.
+**IMPORTANT** Information about the MCP Server tool call also might be just part of the context.
+- If no MCP server tool information assume we are going with the default.
 
 ## Implementation Details
 
@@ -10,7 +15,9 @@
 - Python ≥ 3.12 with uv as the package manager
 - Document all functions and classes with clear docstrings
 - Focus on simplicity and clarity for demonstration purposes
-- Document README following style ai_docs/sample_readme.md
+- Document README.  
+    - Use ai_docs/sample_readme.md to understand what a well formed README should look like.
+    - Ensure there are usage examples.
 
 ### MCP Server Framework
 - Use the standard `mcp` package (≥1.6.0) for MCP protocol compatibility
@@ -61,28 +68,29 @@ The server supports:
 
 ## Codebase Structure
 
+> NOTE: $ARG is a placeholder that should be replaced with the name of your MCP server (e.g., "my_mcp_server").
+> All instances of $ARG in this spec should be replaced with your chosen server name.
+
 - pyproject.toml
 - README.md
 - src/
-    - template_mcp_server/
+    - $ARG/                   # Main package directory with your server name
         - __init__.py
-        - main.py
-        - server.py
-            - FastMCP instance creation
-            - Tool registration
+        - main.py             # Entry point for the application
+        - server.py           # FastMCP instance creation and tool registration
         - tools/
             - __init__.py
-            - some_tool.py
+            - sample_tool.py  # File name should match the tool function name
             - ...
         - shared/
             - __init__.py
-            - utils.py
-            - data_types.py   (Pydantic)
+            - utils.py        # Helper functions for formatting, error handling, etc.
+            - data_types.py   # Pydantic models for request/response validation
         - tests/
             - __init__.py
             - tools/
                 - __init__.py
-                - some_tool.py
+                - test_sample_tool.py  # Tests should match their implementation file names
                 - ...
             - shared/
                 - __init__.py
@@ -94,25 +102,101 @@ The server supports:
 - Requires Python >=3.12
 - Ensure Sections 
     - [project], [build-system], [tool.setuptools], [tool.pytest] ...
+- Add [project.scripts] section to make package executable:
+  ```toml
+  [project.scripts]
+  $ARG = "$ARG.main:main"  # This makes your server executable with the name matching your package
+  ```
 
 ### Data Types Implementation
 
-The `data_types.py` file should contain pydantic Data types and models if necessary.
+The `data_types.py` file should contain pydantic Data types and models for validating tool inputs.
+These models can be used directly in your tool functions or for validation.
 
+*Example*
+```python
+from pydantic import BaseModel, Field, field_validator
+
+class GreetingRequest(BaseModel):
+    """Request model for the sample_tool."""
+    name: str = Field(default="John", description="The name to greet")
+    
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        if not v or not isinstance(v, str):
+            raise ValueError("Name cannot be empty")
+        return v
+
+# You can then use this model in your tool implementation:
+# from $ARG.shared.data_types import GreetingRequest
+# def sample_tool(request: GreetingRequest) -> str:
+#     return f"Hello, {request.name}!"
+```
+
+### Utilities Implementation
+
+The `utils.py` file should contain helper functions used across the server:
+
+*Example*
+```python
+def format_error_response(error_code: str, error_message: str, details: dict = None) -> dict:
+    """Format a standard error response."""
+    response = {
+        "error": {
+            "code": error_code,
+            "message": error_message
+        }
+    }
+    if details:
+        response["error"]["details"] = details
+    return response
+```
+
+### Error Handling
+
+Use the built-in exception classes from the MCP package:
+
+```python
+# For validation errors in tool inputs
+from mcp.server.fastmcp.exceptions import ValidationError
+
+# Usage example
+if not name or not isinstance(name, str):
+    raise ValidationError("Empty or invalid name parameter")
+```
+
+Available exception classes:
+- `mcp.server.fastmcp.exceptions.ValidationError` - For input validation errors
+- `mcp.server.fastmcp.exceptions.ToolError` - For errors during tool execution
+- `mcp.server.fastmcp.exceptions.ResourceError` - For resource-related errors
+- `mcp.server.fastmcp.exceptions.FastMCPError` - Base error class
 
 ### Error Codes
 
-| Code | Meaning |
-|------|---------|
-| INVALID_INPUT_FORMAT | Empty or invalid name parameter |
-| INTERNAL_SERVER_ERROR| Unhandled exception inside the server |
+When to use each error code:
+
+| Code | Meaning | When to Use |
+|------|---------|-------------|
+| INVALID_INPUT_FORMAT | Input validation failed | When user input doesn't meet expected format or constraints |
+| INTERNAL_SERVER_ERROR | Unhandled server exception | For unexpected errors during tool execution |
 
 
 ## Tools to Expose
 
 - CREATE def sample_tool(name: str = "John") -> str:
 - Tool Description: Hello World Sample
-
+- Import and registration pattern:
+  ```python
+  # In tools/sample_tool.py (filename should match function name)
+  def sample_tool(name: str = "John") -> str:
+      """Hello world sample tool."""
+      return f"Hello, {name}!"
+      
+  # In server.py
+  from $ARG.tools.sample_tool import sample_tool
+  mcp.tool()(sample_tool)
+  ```
 
 ### Required .mcp.json Configuration
 
@@ -120,12 +204,12 @@ The `data_types.py` file should contain pydantic Data types and models if necess
 ```json
 {
   "mcpServers": {
-    "<project_name>>": {
+    "$ARG": {  // Replace with your actual server name
       "type": "stdio",
       "command": "uv",
       "args": [
         "run",
-        "<project>"
+        "$ARG"  // Replace with your actual server name
       ],
       "env": {}
     }
@@ -133,8 +217,30 @@ The `data_types.py` file should contain pydantic Data types and models if necess
 }
 ```
 
+### Test Implementation Pattern
+
+Example test for a tool function:
+
+```python
+# In tests/tools/test_sample_tool.py
+import pytest
+from mcp.server.fastmcp.exceptions import ValidationError
+from $ARG.tools.sample_tool import sample_tool
+
+def test_sample_tool_default():
+    """Test sample_tool with default parameter."""
+    result = sample_tool()
+    assert result == "Hello, John!"
+
+def test_sample_tool_empty_name():
+    """Test sample_tool with empty name."""
+    with pytest.raises(ValidationError):
+        sample_tool(name="")
+```
+
 ## Validation (close the loop)
 
-- Run `uv run pytest <path_to_test>` to validate the tests are passing - do this iteratively as you build out the tests.
-- After code is written, run `uv run pytest` to validate all tests are passing.
-- At the end Use `uv run <project> --help` to validate the mcp server works.
+- Run `uv sync` to install dependencies and create virtual environment
+- Run `uv pip install -e .` to install the package in development mode
+- Run `uv run pytest` to validate all tests are passing
+- At the end, use `uv run $ARG --version` to validate the MCP server works

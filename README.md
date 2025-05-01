@@ -9,7 +9,8 @@
 MCP_SERVER_NAME="scrum-team-mcp-server"
 
 # Define the Spec for the initial tool we are making.
-TOOL_SPEC=$(cat <<EOF
+DETAILS=$(cat <<EOF
+<mcp_server_name>$MCP_SERVER_NAME</mcp_server_name>
 <toolSpec>
     <toolsToExpose>
         <tool>
@@ -39,10 +40,8 @@ ALLOWED_TOOLS=(
 # Establish the prompt
 AI_PROMPT="
 - Run git ls-files and eza --git-ignore --tree to understand the context of the project.
-- Implement the Spec for the $MCP_SERVER_NAME.
-- The initial tool for the MCP Server should be:
-
-$TOOL_SPEC
+- Implement the Spec with:
+$DETAILS
 "
 
 # Execute the Agent

@@ -4,22 +4,30 @@
 
 ## METADATA Prompt Argument Handling
 
-This prompt may receive $ARGS coming in.  If so this is how to interpert the additional information.
+This prompt may receive additional arguments during initialization. Here's how to interpret this information:
 
 The MCP server will receive the following arguments on initialization:
 
 - Contains `<mcpServerName>` tag with the server name
+  - Example: `<mcpServerName>my-mcp-server</mcpServerName>`
+  - IMPORTANT: When used in Python code, hyphenated names must be converted to underscores
+    - Example: "my-mcp-server" becomes "scrum_team_mcp_server" in Python
+  
 - Contains `<toolSpec>` with `<toolsToExpose>` section listing tools
-- Each tool has `<name>`, `<description>`, and `<details>` tags
-- Example:
+  - Each tool has exactly three tags:
+    - `<name>`: The tool function name (e.g., "reverse_tool")
+    - `<description>`: Short description of the tool (e.g., "String Reverse")
+    - `<details>`: Detailed explanation of the tool's functionality
+  
+- Complete Example:
     ```xml
-    <mcpServerName>a-mcp-server-name</mcpServerName>
+    <mcpServerName>my-mcp-server</mcpServerName>
     <toolSpec>
         <toolsToExpose>
             <tool>
-                <name>a-tool-name</name>
-                <description>a-tool-description</description>
-                <details>a-tool-details</details>
+                <name>my_tool_name</name>
+                <description>my tool description</description>
+                <details>my tool details</details>
             </tool>
         </toolsToExpose>
     </toolSpec>
@@ -96,7 +104,7 @@ The server supports:
 - pyproject.toml
 - README.md
 - src/
-    - $MCP_SERVER_NAME/                   # Main package directory with your server name
+    - $mcpServerName/                   # Main package directory with your server name
         - __init__.py
         - main.py             # Entry point for the application
         - server.py           # FastMCP instance creation and tool registration
@@ -127,7 +135,7 @@ The server supports:
 - Add [project.scripts] section to make package executable:
   ```toml
   [project.scripts]
-  $MCP_SERVER_NAME= "$MCP_SERVER_NAME.main:main"  # This makes your server executable with the name matching your package
+  $mcpServerName= "$mcpServerName.main:main"  # This makes your server executable with the name matching your package
   ```
 
 ### Data Types Implementation
@@ -151,7 +159,7 @@ class GreetingRequest(BaseModel):
         return v
 
 # You can then use this model in your tool implementation:
-# from $MCP_SERVER_NAME.shared.data_types import GreetingRequest
+# from $mcpServerName.shared.data_types import GreetingRequest
 # def sample_tool(request: GreetingRequest) -> str:
 #     return f"Hello, {request.name}!"
 ```
@@ -216,7 +224,7 @@ When to use each error code:
       return f"Hello, {name}!"
       
   # In server.py
-  from $MCP_SERVER_NAME.tools.sample_tool import sample_tool
+  from $mcpServerName.tools.sample_tool import sample_tool
   mcp.tool()(sample_tool)
   ```
 
@@ -226,12 +234,12 @@ When to use each error code:
 ```json
 {
   "mcpServers": {
-    "$MCP_SERVER_NAME": {  // Replace with your actual server name
+    "$mcpServerName": {  // Replace with your actual server name
       "type": "stdio",
       "command": "uv",
       "args": [
         "run",
-        "$MCP_SERVER_NAME"  // Replace with your actual server name
+        "$mcpServerName"  // Replace with your actual server name
       ],
       "env": {}
     }
@@ -247,7 +255,7 @@ Example test for a tool function:
 # In tests/tools/test_sample_tool.py
 import pytest
 from mcp.server.fastmcp.exceptions import ValidationError
-from $MCP_SERVER_NAME.tools.sample_tool import sample_tool
+from $mcpServerName.tools.sample_tool import sample_tool
 
 def test_sample_tool_default():
     """Test sample_tool with default parameter."""
@@ -265,4 +273,4 @@ def test_sample_tool_empty_name():
 - Run `uv sync` to install dependencies and create virtual environment
 - Run `uv pip install -e .` to install the package in development mode
 - Run `uv run pytest` to validate all tests are passing
-- At the end, use `uv run $MCP_SERVER_NAME --version` to validate the MCP server works
+- At the end, use `uv run $mcpServerName --version` to validate the MCP server works

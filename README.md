@@ -10,7 +10,7 @@ MCP_SERVER_NAME="scrum-team-mcp-server"
 
 # Define the Spec for the initial tool we are making.
 DETAILS=$(cat <<EOF
-<mcp_server_name>$MCP_SERVER_NAME</mcp_server_name>
+<mcpServerName>$MCP_SERVER_NAME</mcpServerName>
 <toolSpec>
     <toolsToExpose>
         <tool>

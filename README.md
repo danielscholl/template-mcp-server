@@ -1,6 +1,9 @@
 # MCP Server
 
 ## Initial Execute Instruction Set
+
+> Warning: This will run claude in YOLO mode with no interactions.
+
 ```bash
 # Define the Name of the MCP Server we are creating.
 MCP_SERVER_NAME="scrum-team-mcp-server"
@@ -35,11 +38,13 @@ ALLOWED_TOOLS=(
 
 # Establish the prompt
 AI_PROMPT="
-Run git ls-files and eza --git-ignore --tree to understand the context of the project.
-Implement the Spec for the $MCP_SERVER_NAME.
-The initial tool for the MCP Server should be $TOOL_SPEC
+- Run git ls-files and eza --git-ignore --tree to understand the context of the project.
+- Implement the Spec for the $MCP_SERVER_NAME.
+- The initial tool for the MCP Server should be:
+
+$TOOL_SPEC
 "
 
 # Execute the Agent
-claude -p $AI_PROMPT --allowedTools $ALLOWED_TOOLS
+claude -p $AI_PROMPT --allowedTools $ALLOWED_TOOLS --json
 ```
